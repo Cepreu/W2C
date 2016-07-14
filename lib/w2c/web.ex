@@ -43,7 +43,6 @@ defmodule W2C.Web do
     |> Enum.join("\n")
   end
 
-
   # curl -d '' 'http://localhost:5454/add_entry?list=bob&date=20131219&title=Dentist'
   post "/add_entry" do
     conn
@@ -72,7 +71,6 @@ defmodule W2C.Web do
     Plug.Conn.assign(conn, :response, "OK")
   end
 
-
   defp parse_date(
     # Using pattern matching to extract parts from YYYYMMDD string
     << year::binary-size(4), month::binary-size(2), day::binary-size(2) >>
@@ -80,7 +78,26 @@ defmodule W2C.Web do
     {String.to_integer(year), String.to_integer(month), String.to_integer(day)}
   end
 
+# ========= curl -d '' 'http://localhost:5454/domains/12345/new_session
+  get "/domains/:domain_id/new_session" do
+    conn
+    |> Plug.Conn.fetch_query_params
+    |> new_session(domain_id)
+    |> respond
+  end
 
+  defp new_session(conn, domain_id) do
+    domain_id
+    |> W2C.Cache.server_process
+    |> W2C.Server.add_entry(
+          %{
+            date: parse_date(conn.params["date"]),
+            title: conn.params["title"]
+          }
+        )
+
+    Plug.Conn.assign(conn, :response, "OK")
+  end
   defp respond(conn) do
     conn
     |> Plug.Conn.put_resp_content_type("text/plain")
