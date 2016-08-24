@@ -1,13 +1,12 @@
-defmodule W2C.Server do
+defmodule W2C.Cervix do
   use GenServer
 
-  def start_link(name) do
-    IO.puts "Starting to-do server for #{inspect(name)}"
-    GenServer.start_link(W2C.Server, name, name: via_tuple(name))
+  def start_link(name, parameters) do
+    IO.puts "Starting w2cession server for #{inspect(parameters)}"
+    GenServer.start_link(W2C.Cervix, [name, parameters], name: via_tuple(name))
   end
 
   def add_entry(todo_server, new_entry) do
-    # add_entry is turned into a call
     GenServer.call(todo_server, {:add_entry, new_entry})
   end
 
@@ -23,11 +22,10 @@ defmodule W2C.Server do
     {:via, :gproc, {:n, :l, {:todo_server, name}}}
   end
 
+#========== GS Callbacks =========
 
-  def init(name) do
-    # We don't restore from the database immediately. Instead, we'll lazily
-    # fetch entries for the required date on first request.
-    {:ok, {name, W2C.List.new}}
+  def init([name, params]) do
+    {:ok, {name, W2C.Cession.new(params)}}
   end
 
 
@@ -35,14 +33,14 @@ defmodule W2C.Server do
     new_list =
       todo_list
       |> initialize_entries(name, new_entry.date)
-      |> W2C.List.add_entry(new_entry)
+      |> W2C.Cession.add_entry(new_entry)
 
     # We will store just the entries for the given date, thus reducing the amount
     # of data that needs to be stored. This could have been made even more fine-grained
     # but at the expense of more complex queries, so this is a simplistic trade-off.
     W2C.Database.store(
       {name, new_entry.date},     # The key is now more complex
-      W2C.List.entries(new_list, new_entry.date)
+      W2C.Cession.entries(new_list, new_entry.date)
     )
 
     {:reply, :ok, {name, new_list}}
@@ -51,7 +49,7 @@ defmodule W2C.Server do
 
   def handle_call({:entries, date}, _, {name, todo_list}) do
     new_list = initialize_entries(todo_list, name, date)
-    {:reply, W2C.List.entries(new_list, date), {name, new_list}}
+    {:reply, W2C.Cession.entries(new_list, date), {name, new_list}}
   end
 
   # Needed for testing purposes
@@ -62,10 +60,10 @@ defmodule W2C.Server do
   # have it. Otherwise, we attempt to load from the database, or use an empty list
   # if nothing is stored in the database.
   defp initialize_entries(todo_list, name, date) do
-    case W2C.List.entries(todo_list, date) do
+    case W2C.Cession.entries(todo_list, date) do
       nil ->
         entries = W2C.Database.get({name, date}) || []
-        W2C.List.set_entries(todo_list, date, entries)
+        W2C.Cession.set_entries(todo_list, date, entries)
 
       _found -> todo_list
     end

@@ -2,7 +2,7 @@ defmodule W2C.Cache do
   use GenServer
 
   def start_link do
-    IO.puts "Starting to-do cache"
+    IO.puts "Starting todo cache"
     GenServer.start_link(__MODULE__, nil, name: :todo_cache)
   end
 

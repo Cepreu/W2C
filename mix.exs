@@ -12,7 +12,7 @@ defmodule W2C.Mixfile do
 
   def application do
     [
-      applications: [:logger, :gproc, :cowboy, :plug, :mnesia],
+      applications: [:logger, :gproc, :cowboy, :plug, :poison, :mnesia],
       mod: {W2C.Application, []}
     ]
   end
@@ -23,7 +23,9 @@ defmodule W2C.Mixfile do
       {:cowboy, "~> 1.0.0"},
       {:plug, "~> 1.0"},
       {:meck, "0.8.2", only: :test},
-      {:httpoison, "0.4.3", only: :test}
+      {:httpoison, "~> 0.9.0"},
+      {:uuid, "~> 1.1"},
+      {:poison, "~> 2.0"}
     ]
   end
 end

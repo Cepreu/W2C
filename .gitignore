@@ -2,3 +2,4 @@ Mnesia.nonode@nohost/
 _build/
 deps/
 **/*.swp
+Mnesia.nonode@nohost
